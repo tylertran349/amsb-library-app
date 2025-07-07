@@ -27,6 +27,8 @@ class Books extends BaseController
             'publication_year' => 'required|exact_length[4]|numeric'
         ];
 
+        $rules['cover_image'] = 'if_exist|uploaded[cover_image]|max_size[cover_image,1024]|is_image[cover_image]'; // Image validation rules
+
         // Validate the input
         if (! $this->validate($rules)) {
             // If validation fails, redirect back to the form with the errors
@@ -40,6 +42,14 @@ class Books extends BaseController
             'genre' => $this->request->getPost('genre'),
             'publication_year' => $this->request->getPost('publication_year'),
         ];
+
+        // Handle the file upload
+        $img = $this->request->getFile('cover_image');
+        if ($img && $img->isValid() && !$img->hasMoved()) {
+            $newName = $img->getRandomName();
+            $img->move(FCPATH . 'uploads', $newName);
+            $postData['cover_image'] = $newName;
+        }
         
         $bookModel = new BookModel();
 
@@ -69,21 +79,37 @@ class Books extends BaseController
             'author'           => 'required|max_length[255]',
             'publication_year' => 'required|exact_length[4]|numeric'
         ];
-
-        if (! $this->validate($rules)) { // If validation fails, redirect back to the 'edit' form with errors
+        
+        // Image validation rules
+        $imageRules = [
+            'cover_image' => 'if_exist|uploaded[cover_image]|max_size[cover_image,2048]|is_image[cover_image]|mime_in[cover_image,image/jpg,image/jpeg,image/png,image/webp]'
+        ];
+        
+        if (! $this->validate(array_merge($rules, $imageRules))) {
             return redirect()->to('/books/edit/' . $id)->withInput()->with('errors', $this->validator->getErrors());
         }
+        $postData = $this->request->getPost(); // Get all the POST data
+        $img = $this->request->getFile('cover_image'); // Check for a new image upload
+        if ($img && $img->isValid() && !$img->hasMoved()) {
+            $bookModel = new BookModel(); // A new image has been uploaded, so we process it
+            
+            // Get the old image name from the database to delete it
+            $oldBook = $bookModel->find($id);
+            $oldImage = $oldBook['cover_image'];
 
-        // If validation passes, get the POST data
-        $postData = [
-            'title'            => $this->request->getPost('title'),
-            'author'           => $this->request->getPost('author'),
-            'genre'            => $this->request->getPost('genre'),
-            'publication_year' => $this->request->getPost('publication_year'),
-        ];
+            $newName = $img->getRandomName(); // Generate a new random name for the image
+            
+            $img->move(FCPATH . 'uploads', $newName); // Move the new image to the 'public/uploads' directory
+            
+            $postData['cover_image'] = $newName; // Update the cover_image in our data to be saved
+            
+            // Delete the old image file if it exists
+            if ($oldImage && file_exists(FCPATH . 'uploads/' . $oldImage)) {
+                unlink(FCPATH . 'uploads/' . $oldImage);
+            }
+        }
 
         $bookModel = new BookModel();
-
         if ($bookModel->update($id, $postData)) {
             return redirect()->to('/')->with('message', 'Book updated successfully!');
         } else {
@@ -94,11 +120,25 @@ class Books extends BaseController
     public function delete($id = null)
     {
         $bookModel = new BookModel();
-
-        if ($bookModel->delete($id)) {
-            return redirect()->to('/')->with('message', 'Book deleted successfully!');
-        } else {
-            return redirect()->to('/')->with('error', 'Failed to delete book.');
+        
+        // First, get the book record to find the image filename
+        $book = $bookModel->find($id);
+        
+        if ($book) {
+            // Get the image filename
+            $imageFile = $book['cover_image'];
+            
+            // Now, delete the database record
+            if ($bookModel->delete($id)) {
+                // If the database record was deleted successfully, delete the image file
+                if ($imageFile && file_exists(FCPATH . 'uploads/' . $imageFile)) {
+                    unlink(FCPATH . 'uploads/' . $imageFile);
+                }
+                return redirect()->to('/')->with('message', 'Book deleted successfully!');
+            }
         }
+
+        // If something went wrong
+        return redirect()->to('/')->with('error', 'Failed to delete book.');
     }
 }

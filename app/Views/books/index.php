@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <title>Manage Library Books</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- A very basic CSS for styling -->
     <style>
         body { font-family: sans-serif; margin: 2em; }
         table { width: 100%; border-collapse: collapse; }
@@ -12,6 +11,8 @@
         th { background-color: #f2f2f2; }
         .action-links a { margin-right: 10px; }
         .add-book-btn { display: inline-block; margin-bottom: 20px; padding: 10px 15px; background-color: #28a745; color: white; text-decoration: none; border-radius: 5px; }
+        .book-cover { max-width: 60px; height: auto; border-radius: 4px; }
+        .placeholder { width: 60px; height: 90px; background-color: #e9ecef; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #6c757d; font-size: 0.8em; }
     </style>
 </head>
 <body>
@@ -27,6 +28,7 @@
     <table>
         <thead>
             <tr>
+                <th>Cover</th>
                 <th>Title</th>
                 <th>Author</th>
                 <th>Genre</th>
@@ -38,6 +40,13 @@
             <?php if (!empty($books) && is_array($books)): ?>
                 <?php foreach ($books as $book): ?>
                     <tr>
+                        <td>
+                            <?php if (!empty($book['cover_image'])): ?>
+                                <img src="<?= base_url('uploads/' . esc($book['cover_image'])) ?>" alt="<?= esc($book['title']) ?>" class="book-cover">
+                            <?php else: ?>
+                                <div class="placeholder">No Image</div>
+                            <?php endif; ?>
+                        </td>
                         <td><?= esc($book['title']) ?></td>
                         <td><?= esc($book['author']) ?></td>
                         <td><?= esc($book['genre']) ?></td>
@@ -53,7 +62,7 @@
                 <?php endforeach; ?>
             <?php else: ?>
                 <tr>
-                    <td colspan="5">No books found.</td>
+                    <td colspan="6">No books found.</td>
                 </tr>
             <?php endif; ?>
         </tbody>

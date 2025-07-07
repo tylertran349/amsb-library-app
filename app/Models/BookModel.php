@@ -12,7 +12,7 @@ class BookModel extends Model
     protected $returnType       = 'array'; // Or 'object'
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
-    protected $allowedFields    = ['title', 'author', 'genre', 'publication_year'];
+    protected $allowedFields    = ['title', 'author', 'genre', 'publication_year', 'cover_image'];
 
     // Dates
     protected $useTimestamps = true;

@@ -32,6 +32,11 @@ class CreateBooksTable extends Migration
                 'type'       => 'YEAR',
                 'constraint' => '4',
             ],
+            'cover_image' => [
+                'type'       => 'VARCHAR',
+                'constraint' => '255',
+                'null'       => true, // The image is optional, so it can be NULL
+            ],
             'created_at' => [
                 'type' => 'DATETIME',
                 'null' => true,
