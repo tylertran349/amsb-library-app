@@ -2,9 +2,7 @@
 
 namespace App\Controllers;
 
-use App\Controllers\BaseController;
 use App\Models\BookModel;
-use CodeIgniter\HTTP\ResponseInterface;
 
 class Books extends BaseController
 {
@@ -22,20 +20,33 @@ class Books extends BaseController
 
     public function create() 
     {
-        // Get the form data
+        // Define validation rules
+        $rules = [
+            'title'            => 'required|max_length[255]',
+            'author'           => 'required|max_length[255]',
+            'publication_year' => 'required|exact_length[4]|numeric'
+        ];
+
+        // Validate the input
+        if (! $this->validate($rules)) {
+            // If validation fails, redirect back to the form with the errors
+            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+        }
+
+        // If validation passes, proceed with saving the data
         $postData = [
             'title' => $this->request->getPost('title'),
             'author' => $this->request->getPost('author'),
             'genre' => $this->request->getPost('genre'),
             'publication_year' => $this->request->getPost('publication_year'),
         ];
-        $bookModel = new BookModel(); // Instantiate the model
+        
+        $bookModel = new BookModel();
 
-        // Save the data
         if ($bookModel->save($postData)) {
-            return redirect()->to('/')->with('message', 'Book added successfully!'); // Set a success message and redirect
+            return redirect()->to('/')->with('message', 'Book added successfully!');
         } else {
-            return redirect()->back()->with('error', 'Failed to add book.'); // If save fails, redirect back with an error
+            return redirect()->back()->withInput()->with('error', 'Failed to add book.');
         }
     }
 
@@ -52,20 +63,31 @@ class Books extends BaseController
 
     public function update($id = null)
     {
+        // Define validation rules
+        $rules = [
+            'title'            => 'required|max_length[255]',
+            'author'           => 'required|max_length[255]',
+            'publication_year' => 'required|exact_length[4]|numeric'
+        ];
+
+        if (! $this->validate($rules)) { // If validation fails, redirect back to the 'edit' form with errors
+            return redirect()->to('/books/edit/' . $id)->withInput()->with('errors', $this->validator->getErrors());
+        }
+
+        // If validation passes, get the POST data
         $postData = [
-            'title' => $this->request->getPost('title'),
-            'author' => $this->request->getPost('author'),
-            'genre' => $this->request->getPost('genre'),
+            'title'            => $this->request->getPost('title'),
+            'author'           => $this->request->getPost('author'),
+            'genre'            => $this->request->getPost('genre'),
             'publication_year' => $this->request->getPost('publication_year'),
         ];
 
         $bookModel = new BookModel();
 
-        // The `update` method needs the ID as the first parameter
         if ($bookModel->update($id, $postData)) {
             return redirect()->to('/')->with('message', 'Book updated successfully!');
         } else {
-            return redirect()->back()->with('error', 'Failed to update book.');
+            return redirect()->to('/books/edit/' . $id)->withInput()->with('error', 'Failed to update book.');
         }
     }
 
