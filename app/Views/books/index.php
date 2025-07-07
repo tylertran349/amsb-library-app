@@ -15,10 +15,14 @@
     </style>
 </head>
 <body>
-
+    <?php if (session()->getFlashdata('message')): ?>
+        <div class="success-message" style="background-color: #d4edda; color: #155724; padding: 10px; border-radius: 5px; margin-bottom: 20px;">
+            <?= session()->getFlashdata('message') ?>
+        </div>
+    <?php endif; ?>
     <h1>List of Books</h1>
 
-    <a href="/books/create" class="add-book-btn">Add New Book</a>
+    <a href="/books/new" class="add-book-btn">Add New Book</a>
 
     <table>
         <thead>
@@ -39,8 +43,11 @@
                         <td><?= esc($book['genre']) ?></td>
                         <td><?= esc($book['publication_year']) ?></td>
                         <td class="action-links">
-                            <a href="#">Edit</a>
-                            <a href="#">Delete</a>
+                            <a href="/books/edit/<?= $book['id'] ?>">Edit</a>
+                            <form action="/books/delete/<?= $book['id'] ?>" method="post" style="display:inline;">
+                                <?= csrf_field() ?>
+                                <button type="submit" onclick="return confirm('Are you sure you want to delete this book?')" style="background:none; border:none; color:red; cursor:pointer; padding:0; text-decoration:underline;">Delete</button>
+                            </form>
                         </td>
                     </tr>
                 <?php endforeach; ?>
