@@ -131,7 +131,7 @@ class Books extends BaseController
     {
         $bookModel = new BookModel();
         
-        // First, get the book record to find the image filename
+        // Get the book record to find the image filename
         $book = $bookModel->find($id);
         
         if ($book) {
