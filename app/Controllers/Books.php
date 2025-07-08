@@ -9,7 +9,7 @@ class Books extends BaseController
     public function index() 
     {
         $bookModel = new BookModel();
-        $data['books'] = $bookModel->findAll();
+        $data['books'] = $bookModel->orderBy('id', 'DESC')->findAll(); // Order by descending ID to show newest books first
         return view('books/index', $data);
     }
 
@@ -24,15 +24,22 @@ class Books extends BaseController
         $rules = [
             'title'            => 'required|max_length[255]',
             'author'           => 'required|max_length[255]',
-            'publication_year' => 'required|exact_length[4]|numeric'
+            'publication_year' => 'required|integer|greater_than_equal_to[0]|less_than_equal_to[' . date('Y') . ']' // Publication year should be between (and including) 0 and the current year
         ];
 
-        $rules['cover_image'] = 'if_exist|uploaded[cover_image]|max_size[cover_image,1024]|is_image[cover_image]'; // Image validation rules
+        $rules['cover_image'] = 'if_exist|uploaded[cover_image]|max_size[cover_image,2048]|is_image[cover_image]|mime_in[cover_image,image/jpg,image/jpeg,image/png,image/webp]'; // Image validation rules
+
+        $messages = [
+            'publication_year' => [
+                'greater_than_equal_to' => 'The publication year cannot be a negative number.',
+                'less_than_equal_to'    => 'The publication year cannot be in the future.',
+                'required' => 'The publication year field is required.',
+            ]
+        ];
 
         // Validate the input
-        if (! $this->validate($rules)) {
-            // If validation fails, redirect back to the form with the errors
-            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+        if (! $this->validate($rules, $messages)) { // If validation fails, redirect back to the form with the errors
+            return redirect()->to('/books/new')->withInput()->with('errors', $this->validator->getErrors());
         }
 
         // If validation passes, proceed with saving the data
@@ -73,43 +80,46 @@ class Books extends BaseController
 
     public function update($id = null)
     {
-        // Define validation rules
         $rules = [
             'title'            => 'required|max_length[255]',
             'author'           => 'required|max_length[255]',
-            'publication_year' => 'required|exact_length[4]|numeric'
+            'publication_year' => 'required|integer|greater_than_equal_to[0]|less_than_equal_to[' . date('Y') . ']'
         ];
-        
-        // Image validation rules
+
         $imageRules = [
             'cover_image' => 'if_exist|uploaded[cover_image]|max_size[cover_image,2048]|is_image[cover_image]|mime_in[cover_image,image/jpg,image/jpeg,image/png,image/webp]'
         ];
-        
-        if (! $this->validate(array_merge($rules, $imageRules))) {
+
+        $messages = [
+            'publication_year' => [
+                'greater_than_equal_to' => 'The publication year cannot be a negative number.',
+                'less_than_equal_to'    => 'The publication year cannot be in the future.',
+                'required' => 'The publication year field is required.',
+            ]
+        ];
+
+        if (! $this->validate(array_merge($rules, $imageRules), $messages)) {
             return redirect()->to('/books/edit/' . $id)->withInput()->with('errors', $this->validator->getErrors());
         }
-        $postData = $this->request->getPost(); // Get all the POST data
-        $img = $this->request->getFile('cover_image'); // Check for a new image upload
+
+        $bookModel = new BookModel();
+        $postData = $this->request->getPost();
+        
+        $img = $this->request->getFile('cover_image');
         if ($img && $img->isValid() && !$img->hasMoved()) {
-            $bookModel = new BookModel(); // A new image has been uploaded, so we process it
-            
-            // Get the old image name from the database to delete it
+            // Get old image name to delete it after the new one is uploaded
             $oldBook = $bookModel->find($id);
             $oldImage = $oldBook['cover_image'];
+            
+            $newName = $img->getRandomName();
+            $img->move(FCPATH . 'uploads', $newName);
+            $postData['cover_image'] = $newName;
 
-            $newName = $img->getRandomName(); // Generate a new random name for the image
-            
-            $img->move(FCPATH . 'uploads', $newName); // Move the new image to the 'public/uploads' directory
-            
-            $postData['cover_image'] = $newName; // Update the cover_image in our data to be saved
-            
-            // Delete the old image file if it exists
             if ($oldImage && file_exists(FCPATH . 'uploads/' . $oldImage)) {
                 unlink(FCPATH . 'uploads/' . $oldImage);
             }
         }
 
-        $bookModel = new BookModel();
         if ($bookModel->update($id, $postData)) {
             return redirect()->to('/')->with('message', 'Book updated successfully!');
         } else {
@@ -125,20 +135,16 @@ class Books extends BaseController
         $book = $bookModel->find($id);
         
         if ($book) {
-            // Get the image filename
-            $imageFile = $book['cover_image'];
+            $imageFile = $book['cover_image']; // Get the image filename
             
             // Now, delete the database record
             if ($bookModel->delete($id)) {
-                // If the database record was deleted successfully, delete the image file
-                if ($imageFile && file_exists(FCPATH . 'uploads/' . $imageFile)) {
+                if ($imageFile && file_exists(FCPATH . 'uploads/' . $imageFile)) { // If the database record was deleted successfully, delete the image file
                     unlink(FCPATH . 'uploads/' . $imageFile);
                 }
                 return redirect()->to('/')->with('message', 'Book deleted successfully!');
             }
         }
-
-        // If something went wrong
-        return redirect()->to('/')->with('error', 'Failed to delete book.');
+        return redirect()->to('/')->with('error', 'Failed to delete book.'); // If something went wrong
     }
 }

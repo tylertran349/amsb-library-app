@@ -29,8 +29,7 @@ class CreateBooksTable extends Migration
                 'null'       => true, // Genre can be optional
             ],
             'publication_year' => [
-                'type'       => 'YEAR',
-                'constraint' => '4',
+                'type'       => 'SMALLINT',
             ],
             'cover_image' => [
                 'type'       => 'VARCHAR',

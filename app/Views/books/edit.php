@@ -26,13 +26,19 @@
         <h1>Edit Book</h1>
 
         <?php if (session()->getFlashdata('errors')): ?>
-            <div class="errors"> ... </div>
+            <div class="errors">
+                <strong>Please correct the following errors:</strong>
+                <ul>
+                    <?php foreach (session()->getFlashdata('errors') as $error) : ?>
+                        <li><?= esc($error) ?></li>
+                    <?php endforeach ?>
+                </ul>
+            </div>
         <?php endif; ?>
 
         <form action="/books/update/<?= $book['id'] ?>" method="post" enctype="multipart/form-data">
             <?= csrf_field() ?>
 
-            <!-- ... (title, author, genre, publication_year inputs are the same) ... -->
             <label for="title">Title <span style="color: red;">*</span></label>
             <input type="text" name="title" id="title" value="<?= old('title', esc($book['title'])) ?>">
 
