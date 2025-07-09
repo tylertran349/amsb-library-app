@@ -3,22 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Edit Book</title>
-    <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; margin: 2em; background-color: #f8f9fa; color: #212529; }
-        .container { max-width: 600px; margin: auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        h1 { color: #343a40; }
-        form { margin-top: 1.5em; }
-        label { display: block; margin-top: 1em; font-weight: 500; }
-        input[type=text], input[type=number], input[type=file] { width: 100%; padding: 0.75em; margin-top: 0.5em; border-radius: 4px; border: 1px solid #ced4da; box-sizing: border-box; }
-        input[type=submit] { margin-top: 2em; padding: 10px 20px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1em; }
-        input[type=submit]:hover { background-color: #0069d9; }
-        .back-link { display: inline-block; margin-top: 1.5em; color: #007bff; text-decoration: none; }
-        .back-link:hover { text-decoration: underline; }
-        .errors { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; padding: 1rem; border-radius: 5px; margin-bottom: 20px; }
-        .errors ul { padding-left: 20px; margin: 0; }
-        .current-image { margin-top: 1em; }
-        .current-image img { max-width: 150px; height: auto; border-radius: 4px; border: 1px solid #ddd; }
-    </style>
+    <link rel="stylesheet" type="text/css" href="<?= base_url('styles/style.css') ?>">
 </head>
 <body>
 
