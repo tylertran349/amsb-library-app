@@ -68,7 +68,7 @@ composer install
 
 ### Step 4: Prepare the Database with XAMPP
 
-1.  Open the **XAMPP Control Panel** and start the **Apache** and **MySQL** modules.
+1.  Open the **XAMPP Control Panel** and click the **"Start"** button for both the **Apache** and **MySQL** modules. They should both turn green.
 2.  Open your web browser and navigate to `http://localhost/phpmyadmin`.
 3.  Click on the **"Databases"** tab at the top.
 4.  Under "Create database", enter the database name: **`amsb-library-app`**.
