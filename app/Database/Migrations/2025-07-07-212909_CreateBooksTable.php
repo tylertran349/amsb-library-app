@@ -26,7 +26,7 @@ class CreateBooksTable extends Migration
             'genre' => [
                 'type'       => 'VARCHAR',
                 'constraint' => '100',
-                'null'       => true, // Genre can be optional
+                'null'       => true,
             ],
             'publication_year' => [
                 'type'       => 'SMALLINT',
@@ -34,7 +34,7 @@ class CreateBooksTable extends Migration
             'cover_image' => [
                 'type'       => 'VARCHAR',
                 'constraint' => '255',
-                'null'       => true, // The image is optional, so it can be NULL
+                'null'       => true,
             ],
             'created_at' => [
                 'type' => 'DATETIME',
@@ -45,7 +45,7 @@ class CreateBooksTable extends Migration
                 'null' => true,
             ],
         ]);
-        $this->forge->addKey('id', true); // This makes 'id' the primary key
+        $this->forge->addKey('id', true);
         $this->forge->createTable('books');
     }
 

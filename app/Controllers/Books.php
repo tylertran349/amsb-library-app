@@ -27,15 +27,24 @@ class Books extends BaseController
             'publication_year' => 'required|integer|greater_than_equal_to[0]|less_than_equal_to[' . date('Y') . ']' // Publication year should be between (and including) 0 and the current year
         ];
 
-        $rules['cover_image'] = 'if_exist|uploaded[cover_image]|max_size[cover_image,2048]|is_image[cover_image]|mime_in[cover_image,image/jpg,image/jpeg,image/png,image/webp]'; // Image validation rules
+        $rules['cover_image'] = 'if_exist|uploaded[cover_image]|max_size[cover_image,4096]|is_image[cover_image]|mime_in[cover_image,image/jpg,image/jpeg,image/png,image/webp]'; // Image validation rules
 
         $messages = [
             'publication_year' => [
                 'greater_than_equal_to' => 'The publication year cannot be a negative number.',
                 'less_than_equal_to'    => 'The publication year cannot be in the future.',
+                'max_size'   => 'The image cannot be larger than 4MB.',
                 'required' => 'The publication year field is required.',
+            ],
+            'cover_image' => [
+                'is_image'   => 'The uploaded file is not a valid image.',
+                'mime_in'    => 'Please upload a valid image type (jpg, jpeg, png, webp).',
             ]
         ];
+        $img = $this->request->getFile('cover_image');
+        if ($img && $img->isValid()) {
+            $rules['cover_image'] = 'is_image[cover_image]|max_size[cover_image,4096]|mime_in[cover_image,image/jpg,image/jpeg,image/png,image/webp]';
+        }
 
         // Validate the input
         if (! $this->validate($rules, $messages)) { // If validation fails, redirect back to the form with the errors
@@ -80,34 +89,49 @@ class Books extends BaseController
 
     public function update($id = null)
     {
+        // Define base validation rules 
         $rules = [
             'title'            => 'required|max_length[255]',
             'author'           => 'required|max_length[255]',
-            'publication_year' => 'required|integer|greater_than_equal_to[0]|less_than_equal_to[' . date('Y') . ']'
+            'genre'            => 'permit_empty|max_length[100]',
+            'publication_year' => 'required|integer|less_than_equal_to[' . date('Y') . ']'
         ];
 
-        $imageRules = [
-            'cover_image' => 'if_exist|uploaded[cover_image]|max_size[cover_image,2048]|is_image[cover_image]|mime_in[cover_image,image/jpg,image/jpeg,image/png,image/webp]'
-        ];
-
+        // Define custom error messages
         $messages = [
             'publication_year' => [
-                'greater_than_equal_to' => 'The publication year cannot be a negative number.',
-                'less_than_equal_to'    => 'The publication year cannot be in the future.',
+                'less_than_equal_to' => 'The publication year cannot be in the future.',
                 'required' => 'The publication year field is required.',
+            ],
+            'cover_image' => [
+                'is_image'   => 'The uploaded file is not a valid image.',
+                'max_size'   => 'The image cannot be larger than 4MB.',
+                'mime_in'    => 'Please upload a valid image type (jpg, jpeg, png, webp).',
             ]
         ];
 
-        if (! $this->validate(array_merge($rules, $imageRules), $messages)) {
-            return redirect()->to('/books/edit/' . $id)->withInput()->with('errors', $this->validator->getErrors());
+        // Conditionally add image rules only if a new file is uploaded
+        $img = $this->request->getFile('cover_image');
+        if ($img && $img->isValid()) {
+            $rules['cover_image'] = 'is_image[cover_image]|max_size[cover_image,4096]|mime_in[cover_image,image/jpg,image/jpeg,image/png,image/webp]';
         }
 
+        // Run validation
+        if (! $this->validate($rules, $messages)) {
+            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+        }
+
+        // Validation passed
         $bookModel = new BookModel();
-        $postData = $this->request->getPost();
-        
-        $img = $this->request->getFile('cover_image');
+        $postData = [
+            'title'            => $this->request->getPost('title'),
+            'author'           => $this->request->getPost('author'),
+            'genre'            => $this->request->getPost('genre'),
+            'publication_year' => $this->request->getPost('publication_year'),
+        ];
+
+        // Handle the new file upload if it exists
         if ($img && $img->isValid() && !$img->hasMoved()) {
-            // Get old image name to delete it after the new one is uploaded
             $oldBook = $bookModel->find($id);
             $oldImage = $oldBook['cover_image'];
             
@@ -115,25 +139,20 @@ class Books extends BaseController
             $img->move(FCPATH . 'uploads', $newName);
             $postData['cover_image'] = $newName;
 
+            // Delete the old image file if it exists
             if ($oldImage && file_exists(FCPATH . 'uploads/' . $oldImage)) {
                 unlink(FCPATH . 'uploads/' . $oldImage);
             }
         }
 
-        if ($bookModel->update($id, $postData)) {
-            return redirect()->to('/')->with('message', 'Book updated successfully!');
-        } else {
-            return redirect()->to('/books/edit/' . $id)->withInput()->with('error', 'Failed to update book.');
-        }
+        $bookModel->update($id, $postData);
+        return redirect()->to('/')->with('message', 'Book updated successfully!');
     }
 
     public function delete($id = null)
     {
         $bookModel = new BookModel();
-        
-        // Get the book record to find the image filename
-        $book = $bookModel->find($id);
-        
+        $book = $bookModel->find($id); // Get the book record to find the image filename
         if ($book) {
             $imageFile = $book['cover_image']; // Get the image filename
             

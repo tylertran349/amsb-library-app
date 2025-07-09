@@ -9,12 +9,10 @@ class BookModel extends Model
     protected $table            = 'books';
     protected $primaryKey       = 'id';
     protected $useAutoIncrement = true;
-    protected $returnType       = 'array'; // Or 'object'
+    protected $returnType       = 'array';
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
     protected $allowedFields    = ['title', 'author', 'genre', 'publication_year', 'cover_image'];
-
-    // Dates
     protected $useTimestamps = true;
     protected $dateFormat    = 'datetime';
     protected $createdField  = 'created_at';
